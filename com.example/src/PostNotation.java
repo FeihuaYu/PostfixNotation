@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.Stack;
 
 public class PostNotation{
-    private Set<String> operatorsSet = new HashSet<>();
-    private String error = "#ERR";
+    private final Set<String> operatorsSet = new HashSet<>();
+    private final String error = "#ERR";
 
     public PostNotation() {
         operatorsSet.add("+");
@@ -24,7 +24,7 @@ public class PostNotation{
         operatorsSet.add("/");
     }
 
-
+    // read data from CSV file
     public List<List<String>> readFromCSV() throws IOException {
         List<List<String>> csvList = new LinkedList<>();
         List<String> list = new LinkedList<>();
@@ -51,6 +51,7 @@ public class PostNotation{
     }
 
 
+    // save each post notation into a list
     public List<String> getPostNotation(String operations) {
         List<String> list = new LinkedList<>();
         String[] strArray = operations.split("\\s+");
@@ -58,73 +59,34 @@ public class PostNotation{
             if (str.trim().length() > 0) {
                 list.add(str);
             } 
-                
-
-
         }
         return list;
     }
 
 
+    // calculate final result of PostNotation
     public String calculatePostNotation(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
-        Stack<String> stack = new Stack<>();
-        double value = 0;
-        boolean hasOperator = false;
+        String valString = "";
+        valString = calculateCell(list, csvList, rowNum, colNum);
 
+        return valString; 
+    }
+
+
+    // first time calculate only numbers in post notaion
+    public String calculatePostNotationFirst(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+        String valString = "";
         // Check initial format of post notation
         if(!checkPostNotation(list)) {
             return error;
         }
-
-        for(int i=0;i<list.size();i++) {
-            String str = list.get(i);
-            System.out.println("str is " + str);
-            if(operatorsSet.contains(str)){
-                hasOperator = true;
-                if(!stack.isEmpty() && stack.size() > 1) {
-                    double a = Double.parseDouble(stack.pop());
-                    double b = Double.parseDouble(stack.pop());
-                    value = operatePostNotation(str, a, b);
-                    stack.add(String.valueOf(value));
-                }
-            }else {
-                while(containsLetterAndNum(str)) {
-                    int[] index = new int[2];
-                    index = parseLetter(str);
-                    if(index[0]==rowNum && index[1]==colNum){
-                        System.out.println(error);
-                        return error;
-                    }
-                    if(csvList.size() > index[0] && csvList.get(i).size() > index[1]) {
-                        str = csvList.get(index[0]).get(index[1]);
-                    }else {
-                        str = error;
-                    }
-                }
-                stack.add(str);
-            }
-            
-        }
-
-        if(!hasOperator && list.size()>1) {
-            System.out.println(error);
-            return error;
-        }
-
-        if(hasOperator && list.size()==2) {
-            System.out.println(error);
-            return error;
-        }
-
-        String valString = stack.pop();
-
-        System.out.println(valString);
+        valString = calculateNumCell(list, csvList, rowNum, colNum);
 
         return valString; 
-
     }
 
 
+    // parse letters in post notaion
     public int[] parseLetter(String str) {
         // a2[1 0]   b1[0 1]
         int[] index = new int[2];
@@ -144,9 +106,10 @@ public class PostNotation{
     }
 
 
+    // check if contains letters and numbers(eg. a1 b3)
     public boolean containsLetterAndNum(String str) {
         str = str.toLowerCase();
-        String regex = "[a-z][0-9]*"; 
+        String regex = "[a-z][0-9]+"; 
         if(str.matches(regex)) {
             return true;
         }
@@ -181,26 +144,112 @@ public class PostNotation{
         return true;
     }
 
-    public void implementFunction() throws IOException {
-        List<List<String>> csvList = new LinkedList<>();
-        List<String> postNotationList = new LinkedList<>();
 
-        csvList = readFromCSV();
-
-        for(int i=0;i<csvList.size();i++) {
-            for(int j=0;j<csvList.get(i).size();j++) {
-                postNotationList = getPostNotation(csvList.get(i).get(j));
-                String strResult = calculatePostNotation(postNotationList, csvList, i, j);
-                csvList.get(i).set(j, strResult);
+    // calculate the result of each cell
+    public String calculateCell(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+        Boolean hasOperator = false;
+        Stack<String> stack = new Stack<>();
+        double value = 0;
+        String valString = "";
+        for(int i=0;i<list.size();i++) {
+            String str = list.get(i);
+            if(operatorsSet.contains(str)){
+                hasOperator = true;
+                if(!stack.isEmpty() && stack.size() > 1) {
+                    double a = Double.parseDouble(stack.pop());
+                    double b = Double.parseDouble(stack.pop());
+                    value = operatePostNotation(str, a, b);
+                    stack.add(String.valueOf(value));
+                }
+            }else {
+                str = convertToNum(str, csvList, i, rowNum, colNum);
+                stack.add(str);
             }
         }
 
-        writeToCSV(csvList);
+        if(!checkOutputError(hasOperator, list)) {
+            valString = stack.pop();
+        }else {
+            valString = error;
+        }
 
+        return valString;
     }
 
 
+    // if it contains letters(refer), convert to numbers
+    public String convertToNum(String str, List<List<String>> csvList, int i, int rowNum, int colNum) {
+        while(containsLetterAndNum(str)) {
+            int[] index = new int[2];
+            index = parseLetter(str);
+            if(index[0]==rowNum && index[1]==colNum){
+                return error;
+            }
 
+            if(csvList.size() > index[0] && csvList.get(i).size() > index[1]) {
+                str = csvList.get(index[0]).get(index[1]);
+            }else {
+                str = error;
+            }
+        }
+        return str;
+    }
+
+
+    // first time only calculate cell with numbers
+    public String calculateNumCell(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+        String regexLetter = ".*[a-z].*";
+        boolean hasOperator = false;
+        boolean hasLetter = false;
+        String valString = "";
+        Stack<String> stack = new Stack<>();
+        double value = 0;
+
+        for(int i=0;i<list.size();i++) {
+            String str = list.get(i);
+            if(!str.matches(regexLetter)) {
+                if(operatorsSet.contains(str)){
+                    hasOperator = true;
+                    if(!stack.isEmpty() && stack.size() > 1) {
+                        double a = Double.parseDouble(stack.pop());
+                        double b = Double.parseDouble(stack.pop());
+                        value = operatePostNotation(str, a, b);
+                        stack.add(String.valueOf(value));
+                    }
+                }else {
+                    stack.add(str);
+                }
+            } else{
+                hasLetter = true;
+                break;
+            }
+        }
+
+        if(!hasLetter) {
+            if(!checkOutputError(hasOperator, list)) {
+                valString = stack.pop();
+            }else {
+                valString = error;
+            }
+        }
+
+        return valString;
+    }
+
+
+    // check output error
+    public boolean checkOutputError(boolean hasOperator, List<String> list) {
+        if(!hasOperator && list.size()>1) {
+            return true;
+        }
+
+        if(hasOperator && list.size()==2) {
+            return true;
+        }
+
+        return false;
+    }
+    // operate post notation
     public double operatePostNotation(String str, double a, double b) {
         double value = 0;
         switch(str) {
@@ -222,6 +271,7 @@ public class PostNotation{
     }
 
 
+    // write result to CSV file
     public void writeToCSV(List<List<String>> csvList) throws IOException {
         File csvFile = new File("result.csv");
         FileWriter fileWriter = new FileWriter(csvFile);
@@ -238,5 +288,38 @@ public class PostNotation{
             fileWriter.write(stringBuilder.toString());
         }   
         fileWriter.close();
+    }
+
+
+    // implement the whole function
+    public void implementFunction() throws IOException {
+        List<List<String>> csvList = new LinkedList<>();
+        List<String> postNotationList = new LinkedList<>();
+
+        csvList = readFromCSV();
+
+        // first time only calculate cell with numbers
+        for(int i=0;i<csvList.size();i++) {
+            for(int j=0;j<csvList.get(i).size();j++) {
+                postNotationList = getPostNotation(csvList.get(i).get(j));
+                String strResult = calculatePostNotationFirst(postNotationList, csvList, i, j);
+                if(!strResult.equals("")) {
+                    csvList.get(i).set(j, strResult);
+                }
+            }
+        }
+
+        // then check each cell
+        for(int i=0;i<csvList.size();i++) {
+            for(int j=0;j<csvList.get(i).size();j++) {
+                postNotationList = getPostNotation(csvList.get(i).get(j));
+                String strResult = calculatePostNotation(postNotationList, csvList, i, j);
+                csvList.get(i).set(j, strResult);
+                System.out.println(csvList.get(i).get(j));
+            }
+        }
+
+        writeToCSV(csvList);
+
     }
 }
