@@ -16,36 +16,42 @@ import java.util.Stack;
 public class PostNotation{
     private final Set<String> operatorsSet = new HashSet<>();
     private final String error = "#ERR";
+    private String filePath;
 
-    public PostNotation() {
+    public PostNotation(String filePath) {
         operatorsSet.add("+");
         operatorsSet.add("-");
         operatorsSet.add("*");
         operatorsSet.add("/");
+        this.filePath = filePath;
     }
 
     // read data from CSV file
     public List<List<String>> readFromCSV() throws IOException {
         List<List<String>> csvList = new LinkedList<>();
         List<String> list = new LinkedList<>();
-        String filePath = "postfix_notation​.csv";
 
-        try {
-            try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-                String line;
-                line = br.readLine();
-
-                while (line != null) { 
-                    String[] attributes = line.split(","); 
-                    list = Arrays.asList(attributes);
-                    csvList.add(list); 
+        File file = new File(filePath);
+        if(file.exists()) {
+            try {
+                try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+                    String line;
                     line = br.readLine();
+    
+                    while (line != null) { 
+                        String[] attributes = line.split(","); 
+                        list = Arrays.asList(attributes);
+                        csvList.add(list); 
+                        line = br.readLine();
+                    }
                 }
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }  
+    
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }  
+        }else {
+            System.out.println("No file found!!");
+        }
 
         return csvList;
     }
@@ -249,6 +255,8 @@ public class PostNotation{
 
         return false;
     }
+
+    
     // operate post notation
     public double operatePostNotation(String str, double a, double b) {
         double value = 0;
