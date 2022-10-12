@@ -58,7 +58,7 @@ public class PostNotation{
 
 
     // save each postfix notation into a list
-    public List<String> getPostNotation(String operations) {
+    public List<String> getPostfixNotation(String operations) {
         List<String> list = new LinkedList<>();
         String[] strArray = operations.split("\\s+");
         for(String str : strArray) {
@@ -71,7 +71,7 @@ public class PostNotation{
     }
 
 
-    // first time calculate only numbers in post notaion
+    // first time calculate only numbers in postfix notaion
     public String calculateNumPostfixNotation(List<String> list, List<List<String>> csvList) {
         String valString = "";
         // Check initial format of postfix notation
@@ -294,15 +294,15 @@ public class PostNotation{
     // implement the whole function
     public void implementFunction() throws IOException {
         List<List<String>> csvList = new LinkedList<>();
-        List<String> postNotationList = new LinkedList<>();
+        List<String> postfixNotationList = new LinkedList<>();
 
         csvList = readFromCSV();
 
         // first time only calculate cell with numbers
         for(int i=0;i<csvList.size();i++) {
             for(int j=0;j<csvList.get(i).size();j++) {
-                postNotationList = getPostNotation(csvList.get(i).get(j));
-                String strResult = calculateNumPostfixNotation(postNotationList, csvList);
+                postfixNotationList = getPostfixNotation(csvList.get(i).get(j));
+                String strResult = calculateNumPostfixNotation(postfixNotationList, csvList);
                 if(!strResult.equals("")) {
                     csvList.get(i).set(j, strResult);
                 }
@@ -312,8 +312,8 @@ public class PostNotation{
         // then calcualte each cell with reference
         for(int i=0;i<csvList.size();i++) {
             for(int j=0;j<csvList.get(i).size();j++) {
-                postNotationList = getPostNotation(csvList.get(i).get(j));
-                String strResult = calculateReferPostfixNotation(postNotationList, csvList, i, j);
+                postfixNotationList = getPostfixNotation(csvList.get(i).get(j));
+                String strResult = calculateReferPostfixNotation(postfixNotationList, csvList, i, j);
                 csvList.get(i).set(j, strResult);
                 System.out.println(csvList.get(i).get(j));
             }
