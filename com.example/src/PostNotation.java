@@ -63,8 +63,9 @@ public class PostNotation{
         String[] strArray = operations.split("\\s+");
         for(String str : strArray) {
             if (str.trim().length() > 0) {
-                list.add(str);
+                list.add(str.trim());
             } 
+
         }
         return list;
     }
