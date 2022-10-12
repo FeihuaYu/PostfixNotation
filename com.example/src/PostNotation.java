@@ -16,7 +16,7 @@ import java.util.Stack;
 public class PostNotation{
     private final Set<String> operatorsSet = new HashSet<>();
     private final String error = "#ERR";
-    private String filePath;
+    private final String filePath;
 
     public PostNotation(String filePath) {
         operatorsSet.add("+");
@@ -57,7 +57,7 @@ public class PostNotation{
     }
 
 
-    // save each post notation into a list
+    // save each postfix notation into a list
     public List<String> getPostNotation(String operations) {
         List<String> list = new LinkedList<>();
         String[] strArray = operations.split("\\s+");
@@ -70,29 +70,20 @@ public class PostNotation{
     }
 
 
-    // calculate final result of PostNotation
-    public String calculatePostNotation(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
-        String valString = "";
-        valString = calculateCell(list, csvList, rowNum, colNum);
-
-        return valString; 
-    }
-
-
     // first time calculate only numbers in post notaion
-    public String calculatePostNotationFirst(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+    public String calculateNumPostfixNotation(List<String> list, List<List<String>> csvList) {
         String valString = "";
-        // Check initial format of post notation
-        if(!checkPostNotation(list)) {
+        // Check initial format of postfix notation
+        if(!isPostfixNotationValid(list)) {
             return error;
         }
-        valString = calculateNumCell(list, csvList, rowNum, colNum);
+        valString = calculateNumCell(list, csvList);
 
         return valString; 
     }
 
 
-    // parse letters in post notaion
+    // parse letters in postfix notaion
     public int[] parseLetter(String str) {
         // a2[1 0]   b1[0 1]
         int[] index = new int[2];
@@ -123,8 +114,8 @@ public class PostNotation{
     }
 
 
-    //  Check initial format of post notation 
-    public boolean checkPostNotation(List<String> list) {
+    //  Check initial format of postfix notation 
+    public boolean isPostfixNotationValid(List<String> list) {
         String regexNum = "[0-9]+"; 
         String regexLetter = "[a-zA-Z]";
         if(list.isEmpty() || list.size()==0) {
@@ -151,8 +142,8 @@ public class PostNotation{
     }
 
 
-    // calculate the result of each cell
-    public String calculateCell(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+    // calculate the result of each cell with reference
+    public String calculateReferPostfixNotation(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
         Boolean hasOperator = false;
         Stack<String> stack = new Stack<>();
         double value = 0;
@@ -164,7 +155,7 @@ public class PostNotation{
                 if(!stack.isEmpty() && stack.size() > 1) {
                     double a = Double.parseDouble(stack.pop());
                     double b = Double.parseDouble(stack.pop());
-                    value = operatePostNotation(str, a, b);
+                    value = operatePostfixNotation(str, a, b);
                     stack.add(String.valueOf(value));
                 }
             }else {
@@ -202,8 +193,8 @@ public class PostNotation{
     }
 
 
-    // first time only calculate cell with numbers
-    public String calculateNumCell(List<String> list, List<List<String>> csvList, int rowNum, int colNum) {
+    // calculate cell with numbers
+    public String calculateNumCell(List<String> list, List<List<String>> csvList) {
         String regexLetter = ".*[a-z].*";
         boolean hasOperator = false;
         boolean hasLetter = false;
@@ -219,7 +210,7 @@ public class PostNotation{
                     if(!stack.isEmpty() && stack.size() > 1) {
                         double a = Double.parseDouble(stack.pop());
                         double b = Double.parseDouble(stack.pop());
-                        value = operatePostNotation(str, a, b);
+                        value = operatePostfixNotation(str, a, b);
                         stack.add(String.valueOf(value));
                     }
                 }else {
@@ -257,8 +248,8 @@ public class PostNotation{
     }
 
     
-    // operate post notation
-    public double operatePostNotation(String str, double a, double b) {
+    // operate postfix notation
+    public double operatePostfixNotation(String str, double a, double b) {
         double value = 0;
         switch(str) {
             case "+":
@@ -310,18 +301,18 @@ public class PostNotation{
         for(int i=0;i<csvList.size();i++) {
             for(int j=0;j<csvList.get(i).size();j++) {
                 postNotationList = getPostNotation(csvList.get(i).get(j));
-                String strResult = calculatePostNotationFirst(postNotationList, csvList, i, j);
+                String strResult = calculateNumPostfixNotation(postNotationList, csvList);
                 if(!strResult.equals("")) {
                     csvList.get(i).set(j, strResult);
                 }
             }
         }
 
-        // then check each cell
+        // then calcualte each cell with reference
         for(int i=0;i<csvList.size();i++) {
             for(int j=0;j<csvList.get(i).size();j++) {
                 postNotationList = getPostNotation(csvList.get(i).get(j));
-                String strResult = calculatePostNotation(postNotationList, csvList, i, j);
+                String strResult = calculateReferPostfixNotation(postNotationList, csvList, i, j);
                 csvList.get(i).set(j, strResult);
                 System.out.println(csvList.get(i).get(j));
             }
@@ -330,4 +321,5 @@ public class PostNotation{
         writeToCSV(csvList);
 
     }
+
 }
